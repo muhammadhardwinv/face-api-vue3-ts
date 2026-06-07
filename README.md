@@ -66,7 +66,9 @@ An AI-powered Face Recognition System built using Vue 3, TypeScript, and Face-AP
 ---
 
 ## Camera Stopped
-![Camera Stopped State](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203A:%20Identified%20face%20from%20camera%20input.?updatedAt=1780825366366)
+![Camera Stopped State](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%204A%20:%20Camera%20Stopped?updatedAt=1780825415880)
+
+
 
 ---
 
