@@ -1,12 +1,12 @@
 /** @format */
 
 export const knownFaces = [
-	{
-		id: 1,
-		name: "Muhammad Hardwin V",
-		image:
-			"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/muhammad_hardwin_v_selfie.jpg?updatedAt=1780818424474",
-	},
+	// {
+	// 	id: 1,
+	// 	name: "Muhammad Hardwin V",
+	// 	image:
+	// 		"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/muhammad_hardwin_v_selfie.jpg?updatedAt=1780818424474",
+	// },
 	{
 		id: 2,
 		name: "Angela Mekel",
@@ -26,10 +26,10 @@ export const knownFaces = [
 			"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Bacharuddin_Jusuf_Habibie_official_portrait.jpg?updatedAt=1780818364795",
 	},
 
-	{
-		id: 5,
-		name: "Susilo B. Yudhoyono",
-		image:
-			"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Susilo_Bambang_Yudhoyono_official_presidential_portrait_2009.jpg?updatedAt=1780818364816",
-	},
+	// {
+	// 	id: 5,
+	// 	name: "Susilo B. Yudhoyono",
+	// 	image:
+	// 		"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Susilo_Bambang_Yudhoyono_official_presidential_portrait_2009.jpg?updatedAt=1780818364816",
+	// },
 ];
