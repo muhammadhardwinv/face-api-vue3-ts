@@ -119,13 +119,13 @@ Recognition Result
 Clone the repository:
 
 ```bash
-git clone https://github.com/muhammadhardwinv/asg-fromlecture-lc11lec.git
+git clone [https://github.com/muhammadhardwinv/asg-fromlecture-lc11lec.git](https://github.com/muhammadhardwinv/face-api-vue3-ts.git)
 ```
 
 Navigate to the project:
 
 ```bash
-cd asg-fromlecture-lc11lec
+cd vue3-ts
 ```
 
 Install dependencies:
