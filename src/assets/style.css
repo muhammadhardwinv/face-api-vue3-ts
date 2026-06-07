@@ -1,0 +1,52 @@
+/**
+ * Reset
+ *
+ * @format
+ */
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+/* Global page styles */
+html,
+body {
+	height: 100%;
+	width: 100%;
+}
+
+/* FIX: proper scroll-safe layout */
+body {
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		sans-serif;
+
+	background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+
+	/* IMPORTANT FIX */
+	min-height: 100vh;
+	min-height: 100dvh;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+
+	color: #0f172a;
+}
+
+/* Hide scrollbar (keep scroll functional) */
+::-webkit-scrollbar {
+	display: none;
+}
+
+* {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+button {
+	font-family: inherit;
+}
