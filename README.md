@@ -45,33 +45,28 @@ An AI-powered Face Recognition System built using Vue 3, TypeScript, and Face-AP
 # Screenshots
 
 ## Main Interface
-
-![Main Interface]([assets/screenshots/home.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%201:%20No%20process.?updatedAt=1780825068272))
+![Main Interface](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%201:%20No%20process.?updatedAt=1780825068272)
 
 ---
 
 ## Upload Image Recognition
-
-![Upload Recognition]([assets/screenshots/upload.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%202B:%20Uploaded%20image%20ready%20to%20identify?updatedAt=1780825167656))
+![Upload Recognition](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%202B:%20Uploaded%20image%20ready%20to%20identify?updatedAt=1780825167656)
 
 ---
 
 ## Camera Recognition
-
-![Camera Recognition]([assets/screenshots/camera.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%202A:%20Camera%20started%20ready%20to%20identify?updatedAt=1780825182669))
+![Camera Recognition](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%202A:%20Camera%20started%20ready%20to%20identify?updatedAt=1780825182669)
 
 ---
 
 ## Recognition Result
-
-![Recognition Result from File Input]([assets/screenshots/result.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203B:%20Identified%20face%20from%20file%20input.?updatedAt=1780825395184))
-![Recognition Result from Camera Input]([assets/screenshots/result.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203A:%20Identified%20face%20from%20camera%20input.?updatedAt=1780825366366))
+![Recognition Result from File Input](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203B:%20Identified%20face%20from%20file%20input.?updatedAt=1780825395184)
+![Recognition Result from Camera Input](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203A:%20Identified%20face%20from%20camera%20input.?updatedAt=1780825366366)
 
 ---
 
 ## Camera Stopped
-![Camera Stopped State]([assets/screenshots/result.png](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203A:%20Identified%20face%20from%20camera%20input.?updatedAt=1780825366366))
-
+![Camera Stopped State](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%203A:%20Identified%20face%20from%20camera%20input.?updatedAt=1780825366366)
 
 ---
 
