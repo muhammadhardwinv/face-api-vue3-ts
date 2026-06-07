@@ -125,7 +125,7 @@ git clone https://github.com/muhammadhardwinv/face-api-vue3-ts.git
 Navigate to the project:
 
 ```bash
-cd vue3-ts
+cd face-api-vue3-ts
 ```
 
 Install dependencies:
