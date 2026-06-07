@@ -119,7 +119,7 @@ Recognition Result
 Clone the repository:
 
 ```bash
-git clone [https://github.com/muhammadhardwinv/face-api-vue3-ts.git]
+git clone https://github.com/muhammadhardwinv/face-api-vue3-ts.git
 ```
 
 Navigate to the project:
