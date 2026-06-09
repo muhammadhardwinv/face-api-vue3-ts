@@ -6,6 +6,7 @@ import {
 	loadModels,
 	initializeKnownFaces,
 	recognizeFace,
+	detectSleepiness,
 } from "./faceRecognition";
 
 const imagePreview = ref("");
@@ -17,6 +18,13 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const cameraActive = ref(false);
 const cameraStream = ref<MediaStream | null>(null);
 const recognitionFinished = ref(false);
+
+const sleepStatus = ref("Awake");
+const closedFrames = ref(0);
+const alertTriggered = ref(false);
+const alarm = new Audio("/sounds/alarm.wav");
+
+let detectionInterval: number | null = null;
 
 onMounted(async () => {
 	try {
@@ -31,17 +39,19 @@ onMounted(async () => {
 
 const handleUpload = (event: Event) => {
 	const input = event.target as HTMLInputElement;
-	if (!input.files?.length) return;
-	const file = input.files[0];
+
+	const file = input.files?.[0];
+	if (!file) return;
+
 	if (imagePreview.value) {
 		URL.revokeObjectURL(imagePreview.value);
 	}
+
 	imagePreview.value = URL.createObjectURL(file);
 	result.value = "Image ready for recognition";
 	recognitionFinished.value = false;
 };
 
-// Recognition for standard uploaded static images
 const identifyFace = async () => {
 	if (!imageRef.value) return;
 	loading.value = true;
@@ -64,9 +74,32 @@ const identifyFace = async () => {
 };
 
 const startCamera = async () => {
+	detectionInterval = window.setInterval(async () => {
+		if (!videoRef.value) return;
+
+		const result = await detectSleepiness(videoRef.value);
+
+		if (!result) return;
+
+		currentEAR.value = result.ear;
+
+		console.log("EAR:", result.ear);
+
+		if (result.ear < 0.3) {
+			closedFrames.value++;
+		} else {
+			closedFrames.value = 0;
+		}
+
+		if (closedFrames.value > 30) {
+			sleepStatus.value = "Drowsy";
+		} else if (result.ear < 0.3) {
+			sleepStatus.value = "Eyes Closed";
+		} else {
+			sleepStatus.value = "Awake";
+		}
+	}, 100);
 	try {
-		// FIX: Reduced down from 4K to 1080p.
-		// Face-api models drop drastically in accuracy when fed oversized resolution frames.
 		const stream = await navigator.mediaDevices.getUserMedia({
 			video: {
 				width: { ideal: 1920 },
@@ -93,18 +126,26 @@ const startCamera = async () => {
 };
 
 const stopCamera = () => {
+	if (detectionInterval) {
+		clearInterval(detectionInterval);
+		detectionInterval = null;
+	}
+
 	if (cameraStream.value) {
 		cameraStream.value.getTracks().forEach((track) => track.stop());
 		cameraStream.value = null;
 	}
+
 	if (videoRef.value) {
 		videoRef.value.srcObject = null;
 	}
+
 	cameraActive.value = false;
+	sleepStatus.value = "Awake";
+	closedFrames.value = 0;
 	result.value = "Camera stopped";
 };
 
-// Recognition for live camera snaps
 const captureAndIdentify = async () => {
 	if (!videoRef.value || !canvasRef.value) return;
 	loading.value = true;
@@ -113,18 +154,14 @@ const captureAndIdentify = async () => {
 		const canvas = canvasRef.value;
 		const video = videoRef.value;
 
-		// Sync the hidden canvas dimensions to matches the actual stream's resolution
 		canvas.width = video.videoWidth;
 		canvas.height = video.videoHeight;
 
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
-		// Draw current video stream frame onto canvas matrix
 		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-		// FIX: Pass the canvas element directly to the recognition module.
-		// This circumvents the race conditions created by asynchronous file loading / Base64 conversions.
 		const faces = await recognizeFace(canvas);
 
 		if (!faces.length) {
@@ -152,23 +189,31 @@ const resetUpload = () => {
 		fileInputRef.value.value = "";
 	}
 };
+const currentEAR = ref(0);
 </script>
 <template>
 	<div class="container">
-		<h1>AI Face Recognition System</h1>
-		<h2>Camera Recognition</h2>
+		<h2>Live Camera Monitoring</h2>
+		<div class="status-card">
+			<h3>Sleep Status: {{ sleepStatus }}</h3>
+			<p>EAR: {{ currentEAR.toFixed(3) }}</p>
+			<p>Closed Frames: {{ closedFrames }}</p>
+		</div>
 		<video ref="videoRef" autoplay playsinline muted class="camera"></video>
 		<canvas ref="canvasRef" style="display: none"></canvas>
 		<div class="button-group">
 			<button @click="startCamera" :disabled="cameraActive">
 				📷 Activate Camera
 			</button>
+
 			<button @click="stopCamera" :disabled="!cameraActive">
 				🛑 Stop Camera
 			</button>
 			<button @click="captureAndIdentify" :disabled="loading || !cameraActive">
 				{{ loading ? "Processing..." : "Capture & Identify" }}
 			</button>
+
+			<!-- <button @click="alarm.play()">Test Alarm</button> -->
 		</div>
 		<hr />
 		<h2>Upload Image Recognition</h2>
@@ -193,7 +238,9 @@ const resetUpload = () => {
 				📂 Upload New Image
 			</button>
 		</div>
-		<pre>{{ result }}</pre>
+		<div class="result-card">
+			<pre>{{ result }}</pre>
+		</div>
 	</div>
 	<footer class="footer">
 		<p>© 2026 Ahmed Hardwin</p>
@@ -225,7 +272,7 @@ h2 {
 	color: #334155;
 	margin-bottom: 20px;
 	font-family: monospace;
-} /* Section Card */
+}
 .card {
 	width: 100%;
 	max-width: 1000px;
@@ -235,23 +282,21 @@ h2 {
 	border-radius: 24px;
 	padding: 32px;
 	margin-bottom: 32px;
-	box-shadow:
-		0 10px 30px rgba(15, 23, 42, 0.08),
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08),
 		0 4px 12px rgba(15, 23, 42, 0.05);
 	border: 1px solid rgba(255, 255, 255, 0.5);
 }
 .camera {
 	width: 100%;
 	max-width: 900px;
+	height: auto;
 	aspect-ratio: 16 / 9;
 	object-fit: cover;
-	border-radius: 24px;
+	border-radius: 16px;
 	background: #000;
 	display: block;
 	margin: 0 auto;
-	box-shadow:
-		0 20px 40px rgba(0, 0, 0, 0.12),
-		0 8px 16px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 .preview {
 	margin: 24px 0;
@@ -264,13 +309,12 @@ h2 {
 	max-height: 500px;
 	object-fit: contain;
 	border-radius: 24px;
-	box-shadow:
-		0 20px 40px rgba(0, 0, 0, 0.12),
-		0 8px 16px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 .button-group {
 	display: flex;
 	flex-wrap: wrap;
+	flex-direction: row;
 	justify-content: center;
 	gap: 12px;
 	margin: 24px 0;
@@ -326,8 +370,7 @@ pre {
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	border: 1px solid rgba(255, 255, 255, 0.5);
-	box-shadow:
-		0 10px 30px rgba(15, 23, 42, 0.08),
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08),
 		0 4px 12px rgba(15, 23, 42, 0.05);
 	font-size: 0.9rem;
 	line-height: 1.6;
@@ -373,42 +416,53 @@ hr {
 .footer span {
 	font-size: 0.85rem;
 	opacity: 0.8;
-} /* Large desktop screens */
-@media (min-width: 1600px) {
+}
+@media (max-width: 480px) {
 	.container {
-		padding-top: 60px;
+		padding: 16px 12px;
 	}
-	h1 {
-		font-size: 3.5rem;
-	}
-	.card {
-		max-width: 1100px;
-	}
-} /* Tablets */
-@media (max-width: 768px) {
-	.container {
-		padding: 24px 16px;
-	}
-	h1 {
-		font-size: 2rem;
-		margin-bottom: 32px;
-	}
+
 	h2 {
-		font-size: 1.2rem;
+		font-size: 1rem;
 	}
-	.card {
-		padding: 20px;
+
+	p {
+		font-size: 0.9rem;
 	}
-	.button-group {
-		flex-direction: column;
-	}
+
 	button {
-		width: 100%;
+		font-size: 0.9rem;
+		padding: 12px;
 	}
-	.camera,
-	.preview img,
+
 	pre {
-		max-width: 100%;
+		font-size: 0.8rem;
+		padding: 12px;
 	}
+}
+.status-card {
+	width: 100%;
+	max-width: 500px;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(10px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.status-card h3 {
+	margin-bottom: 10px;
+	font-size: 1.4rem;
+}
+
+.status-card p {
+	margin: 4px 0;
+	font-size: 1rem;
+}
+
+.result-card {
+	width: 100%;
+	max-width: 900px;
 }
 </style>

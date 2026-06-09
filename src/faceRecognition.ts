@@ -4,13 +4,26 @@ import * as faceapi from "face-api.js";
 import { knownFaces } from "./faceData";
 
 let faceMatcher: faceapi.FaceMatcher;
+let detectionInterval: number | null = null;
 
+function distance(p1: any, p2: any) {
+	return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+}
+
+function calculateEAR(eye: any[]) {
+	const A = distance(eye[1], eye[5]);
+	const B = distance(eye[2], eye[4]);
+	const C = distance(eye[0], eye[3]);
+
+	return (A + B) / (2 * C);
+}
 export async function loadModels() {
 	const MODEL_URL = "/models";
 
 	await Promise.all([
 		faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
 		faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+		faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
 		faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
 	]);
 }
@@ -33,12 +46,12 @@ export async function initializeKnownFaces() {
 			}
 
 			labeledDescriptors.push(
-				new faceapi.LabeledFaceDescriptors(person.name, [detection.descriptor]),
+				new faceapi.LabeledFaceDescriptors(person.name, [detection.descriptor])
 			);
 		} catch (error) {
 			console.error(
 				`Failed loading reference image for ${person.name}:`,
-				error,
+				error
 			);
 		}
 	}
@@ -46,7 +59,7 @@ export async function initializeKnownFaces() {
 	// Fallback descriptor if no known faces were loaded successfully
 	if (labeledDescriptors.length === 0) {
 		console.error(
-			"No known faces were successfully initialized. Face matching will fail.",
+			"No known faces were successfully initialized. Face matching will fail."
 		);
 		return;
 	}
@@ -58,7 +71,7 @@ export async function initializeKnownFaces() {
 export async function recognizeFace(inputElement: faceapi.TNetInput) {
 	if (!faceMatcher) {
 		throw new Error(
-			"FaceMatcher is not initialized. Call initializeKnownFaces() first.",
+			"FaceMatcher is not initialized. Call initializeKnownFaces() first."
 		);
 	}
 
@@ -76,4 +89,27 @@ export async function recognizeFace(inputElement: faceapi.TNetInput) {
 			box: detection.detection.box,
 		};
 	});
+}
+
+export async function detectSleepiness(inputElement: faceapi.TNetInput) {
+	const detection = await faceapi
+		.detectSingleFace(inputElement)
+		.withFaceLandmarks();
+
+	if (!detection) {
+		return null;
+	}
+
+	const leftEye = detection.landmarks.getLeftEye();
+	const rightEye = detection.landmarks.getRightEye();
+
+	const leftEAR = calculateEAR(leftEye);
+	const rightEAR = calculateEAR(rightEye);
+
+	const ear = (leftEAR + rightEAR) / 2;
+
+	return {
+		ear,
+		sleepy: ear < 0.22,
+	};
 }
