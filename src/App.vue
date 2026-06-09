@@ -76,27 +76,25 @@ const identifyFace = async () => {
 const startCamera = async () => {
 	detectionInterval = window.setInterval(async () => {
 		if (!videoRef.value) return;
-
 		const result = await detectSleepiness(videoRef.value);
-
 		if (!result) return;
-
-		currentEAR.value = result.ear;
-
 		console.log("EAR:", result.ear);
-
 		if (result.ear < 0.3) {
 			closedFrames.value++;
 		} else {
 			closedFrames.value = 0;
 		}
-
 		if (closedFrames.value > 30) {
 			sleepStatus.value = "Drowsy";
-		} else if (result.ear < 0.3) {
-			sleepStatus.value = "Eyes Closed";
+			if (!alertTriggered.value) {
+				alertTriggered.value = true;
+				alarm.currentTime = 0;
+				alarm.play();
+				alert("⚠️ Drowsiness Detected!");
+			}
 		} else {
 			sleepStatus.value = "Awake";
+			alertTriggered.value = false;
 		}
 	}, 100);
 	try {
@@ -113,7 +111,6 @@ const startCamera = async () => {
 			console.error("No video track found");
 			return;
 		}
-
 		if (videoRef.value) {
 			videoRef.value.srcObject = stream;
 		}
