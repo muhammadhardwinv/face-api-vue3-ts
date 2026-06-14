@@ -1,12 +1,12 @@
 /** @format */
 
 export const knownFaces = [
-	{
-		id: 1,
-		name: "Muhammad Hardwin V",
-		image:
-			"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/muhammad_hardwin_v_selfie.jpg?updatedAt=1780818424474",
-	},
+	// {
+	// 	id: 1,
+	// 	name: "Muhammad Hardwin V",
+	// 	image:
+	// 		"https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/muhammad_hardwin_v_selfie.jpg?updatedAt=1780818424474",
+	// },
 	{
 		id: 2,
 		name: "Angela Mekel",
