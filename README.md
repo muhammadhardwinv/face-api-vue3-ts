@@ -1,8 +1,5 @@
 <!-- @format -->
 
-Here is your updated README.md markdown text containing the new section under **Future Enhancements**, keeping your original formatting intact.
-
-````markdown
 # AI Drowsiness Detection & Face Recognition System
 
 An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness while also supporting face recognition from uploaded images and camera captures.
