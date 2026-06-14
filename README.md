@@ -1,12 +1,8 @@
 <!-- @format -->
 
-Here is your updated README.md markdown text containing the new section under **Future Enhancements**, keeping your original formatting intact.
-
-````markdown
 # AI Drowsiness Detection & Face Recognition System
 
-An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness while also supporting face recognition from uploaded images and camera captures.
-
+* An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness. When prolonged eye closure is detected, the system triggers an audible alert sound as an interactive multimedia warning to help regain user attention. In addition, the application supports face recognition through uploaded images and live camera captures, providing a comprehensive computer vision and multimedia-based monitoring solution.
 ---
 
 ## Project Information
@@ -106,41 +102,53 @@ An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3
 
 ## System Workflow
 
+### Drowsiness Detection Workflow
+
 ```text
-User Opens Camera
-        │
-        ▼
+Camera Input
+      │
+      ▼
+Face Detection
+      │
+      ▼
 Facial Landmark Detection
-        │
-        ▼
+      │
+      ▼
 Eye Aspect Ratio (EAR) Calculation
-        │
-        ▼
+      │
+      ▼
 Eye State Analysis
-        │
-        ▼
+      │
+      ▼
+Status Classification
+      │
+      ▼
 Awake / Eyes Closed / Drowsy
 ```
-````
+
+### Face Recognition Workflow
 
 ```text
-Image / Camera Capture
-        │
-        ▼
+Image Upload / Camera Input
+           │
+           ▼
 Face Detection
-        │
-        ▼
-Feature Extraction
-        │
-        ▼
+           │
+           ▼
+Facial Landmark Detection
+           │
+           ▼
+Face Descriptor Extraction
+           │
+           ▼
 Face Matching
-        │
-        ▼
+           │
+           ▼
 Recognition Result
-
+           │
+           ▼
+Known Person / Unknown Person
 ```
-
----
 
 ## Technologies Used
 
@@ -279,17 +287,14 @@ During development, the following improvements were implemented:
 
 ## Repository Structure
 
-```text
+```
 src/
 ├── App.vue
 ├── faceRecognition.ts
 ├── assets/
 ├── components/
 └── models/
-
 ```
-
----
 
 ## Acknowledgements
 
@@ -315,7 +320,3 @@ LC11-LEC
 ## Lecturer
 
 This project was developed as part of the Artificial Intelligence course under the guidance of **Roy Kurniawan, S.Kom., M.M. (LC11-LEC)**.
-
-```
-
-```
