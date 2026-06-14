@@ -100,40 +100,45 @@ An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3
 ![Camera Stopped State](https://ik.imagekit.io/ta62ct70w/asset-kelas-ai/Documentation/Phase%204A%20:%20Camera%20Stopped?updatedAt=1780825415880)
 
 ---
-
-## System Workflow
-
----
-User Opens Camera
-        │
-        ▼
-Facial Landmark Detection
-        │
-        ▼
-Eye Aspect Ratio (EAR) Calculation
-        │
-        ▼
-Eye State Analysis
-        │
-        ▼
-Awake / Eyes Closed / Drowsy
-```
-```
-Image / Camera Capture
-        │
-        ▼
+Camera Input
+      │
+      ▼
 Face Detection
-        │
-        ▼
-Feature Extraction
-        │
-        ▼
-Face Matching
-        │
-        ▼
-Recognition Result
+      │
+      ▼
+Facial Landmark Detection
+      │
+      ▼
+Eye Aspect Ratio (EAR) Calculation
+      │
+      ▼
+Eye State Analysis
+      │
+      ▼
+Status Classification
+      │
+      ▼
+Awake / Eyes Closed / Drowsy
 
-```
+Image Upload / Camera Input
+           │
+           ▼
+Face Detection
+           │
+           ▼
+Facial Landmark Detection
+           │
+           ▼
+Face Descriptor Extraction
+           │
+           ▼
+Face Matching
+           │
+           ▼
+Recognition Result
+           │
+           ▼
+Known Person / Unknown Person
 
 ```
 
