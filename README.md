@@ -1,5 +1,8 @@
 <!-- @format -->
 
+Here is your updated README.md markdown text containing the new section under **Future Enhancements**, keeping your original formatting intact.
+
+````markdown
 # AI Drowsiness Detection & Face Recognition System
 
 An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness while also supporting face recognition from uploaded images and camera captures.
@@ -118,6 +121,7 @@ Eye State Analysis
         ▼
 Awake / Eyes Closed / Drowsy
 ```
+````
 
 ```text
 Image / Camera Capture
@@ -133,6 +137,7 @@ Face Matching
         │
         ▼
 Recognition Result
+
 ```
 
 ---
@@ -167,25 +172,29 @@ The system uses facial landmarks around the eyes to calculate Eye Aspect Ratio (
 Clone the repository:
 
 ```bash
-git clone https://github.com/muhammadhardwinv/face-api-vue3-ts.git
+git clone [https://github.com/muhammadhardwinv/face-api-vue3-ts.git](https://github.com/muhammadhardwinv/face-api-vue3-ts.git)
+
 ```
 
 Navigate to the project:
 
 ```bash
 cd face-api-vue3-ts
+
 ```
 
 Install dependencies:
 
 ```bash
 npm install
+
 ```
 
 Start development server:
 
 ```bash
 npm run dev
+
 ```
 
 ---
@@ -264,6 +273,7 @@ During development, the following improvements were implemented:
 - Recognition history
 - Analytics dashboard
 - Liveness detection
+- **Google Maps Competitor Integration:** Deep integration with full navigation services featuring real-time drowsy monitoring and automated EAR-triggered driver alerts directly tied to spatial routing.
 
 ---
 
@@ -276,6 +286,7 @@ src/
 ├── assets/
 ├── components/
 └── models/
+
 ```
 
 ---
@@ -304,3 +315,7 @@ LC11-LEC
 ## Lecturer
 
 This project was developed as part of the Artificial Intelligence course under the guidance of **Roy Kurniawan, S.Kom., M.M. (LC11-LEC)**.
+
+```
+
+```
