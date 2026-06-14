@@ -1,12 +1,21 @@
 <!-- @format -->
 
 <!doctype html>
-<html lang="">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" href="./public/images/drowsiness-alert_icon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Vite App</title>
+		<title>AI Drowsiness Detection & Face Recognition System</title>
+
+		<script>
+			let docTitle = document.title + "   |   ";
+
+			setInterval(() => {
+				docTitle = docTitle.substring(1) + docTitle.substring(0, 1);
+				document.title = docTitle;
+			}, 300);
+		</script>
 	</head>
 	<body>
 		<div id="app"></div>
