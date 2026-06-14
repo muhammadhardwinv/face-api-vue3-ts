@@ -269,8 +269,19 @@ const currentEAR = ref(0);
 		</div>
 	</div>
 	<footer class="footer">
-		<p>© 2026 Ahmed Hardwin</p>
-		<span>AI Face Recognition System</span>
+		<div class="footer-left">
+			<span class="status-dot"></span>
+			<span>System Active • AI Drowsiness Detection & Face Recognition</span>
+		</div>
+		<div class="footer-right">
+			<a
+				href="https://github.com/muhammadhardwinv"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				<i class="fab fa-github"></i> @muhammadhardwinv
+			</a>
+		</div>
 	</footer>
 </template>
 
@@ -466,34 +477,60 @@ hr {
 	height: 1px;
 	background: linear-gradient(to right, transparent, #cbd5e1, transparent);
 }
+
 .footer {
-	width: 100%;
-	margin-top: 40px;
-	padding: 24px 0;
-	text-align: center;
-	color: #64748b;
-}
-.footer::before {
-	content: "";
-	display: block;
-	width: 100%;
-	max-width: 1000px;
-	height: 1px;
-	margin: 0 auto 24px;
-	background: linear-gradient(
-		to right,
-		transparent,
-		rgba(148, 163, 184, 0.4),
-		transparent
-	);
-}
-.footer p {
-	font-weight: 600;
-	margin-bottom: 4px;
-}
-.footer span {
+	display: flex;
+	justify-content: space-between; /* Pushes content to the left and right edges */
+	align-items: center;
+	padding: 1rem 2rem;
+	background: rgba(
+		15,
+		23,
+		42,
+		0.6
+	); /* Sleek, semi-transparent dark background */
+	backdrop-filter: blur(8px); /* Modern glassmorphism effect */
+	border-top: 1px solid rgba(255, 255, 255, 0.1); /* Subtle top divider */
+	color: #94a3b8; /* Muted tech-gray text color */
+	font-family:
+		"Courier New", Courier, monospace; /* Use monospace for a terminal feel */
 	font-size: 0.85rem;
-	opacity: 0.8;
+}
+
+/* Pulsing Status Dot for Option 1 */
+.status-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	background-color: #10b981; /* Emerald Green */
+	border-radius: 50%;
+	margin-right: 8px;
+	box-shadow: 0 0 8px #10b981;
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.4;
+	}
+}
+
+/* Make your GitHub link turn a cool color (like cyan/neon blue) on hover */
+.footer a {
+	color: #38bdf8;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.footer a:hover {
+	color: #f1f5f9;
+	text-shadow: 0 0 8px #38bdf8; /* Soft neon glow on hover */
 }
 @media (max-width: 480px) {
 	.container {
