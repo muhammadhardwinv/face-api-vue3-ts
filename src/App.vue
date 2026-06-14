@@ -30,11 +30,20 @@ const cameraStream = ref<MediaStream | null>(null);
 const recognitionFinished = ref(false);
 
 const sleepStatus = ref("Awake");
-const closedFrames = ref(0);
 const alertTriggered = ref(false);
 const alarm = new Audio("/sounds/alarm.wav");
 
 let detectionInterval: number | null = null;
+const eyeClosedStartTime = ref<number | null>(null);
+const currentEAR = ref(0);
+const lastEAR = ref(0);
+const showModal = ref(false);
+
+const longestCloseDuration = ref(0);
+const fastestBlinkDuration = ref(Infinity);
+const currentCondition = ref("Eyes Open (Normal)");
+const worstCondition = ref("Normal");
+const totalBlinks = ref(0);
 
 onMounted(async () => {
 	try {
@@ -49,7 +58,6 @@ onMounted(async () => {
 
 const handleUpload = (event: Event) => {
 	const input = event.target as HTMLInputElement;
-
 	const file = input.files?.[0];
 	if (!file) return;
 
@@ -83,43 +91,19 @@ const identifyFace = async () => {
 	}
 };
 
-const showModal = ref(false);
+const updateWorstCondition = (level: string) => {
+	const hierarchy: Record<string, number> = {
+		Normal: 1,
+		"Distracted/Blinking": 2,
+		Sleeping: 3,
+		"ALERT TRIGGERED": 4,
+	};
+	if (hierarchy[level] > hierarchy[worstCondition.value]) {
+		worstCondition.value = level;
+	}
+};
 
 const startCamera = async () => {
-	detectionInterval = window.setInterval(async () => {
-		if (!videoRef.value) return;
-		const result = await detectSleepiness(videoRef.value);
-		if (!result) return;
-
-		currentEAR.value = result.ear;
-
-		if (result.ear < 0.3) {
-			closedFrames.value++;
-		} else {
-			closedFrames.value = 0;
-		}
-
-		if (closedFrames.value > 30) {
-			sleepStatus.value = "Drowsy";
-			if (!alertTriggered.value) {
-				alertTriggered.value = true;
-				alarm.currentTime = 0;
-
-				alarm.loop = true;
-				alarm
-					.play()
-					.catch((err) => console.error("Audio playback failed:", err));
-
-				showModal.value = true;
-			}
-		} else {
-			if (!showModal.value) {
-				sleepStatus.value = "Awake";
-				alertTriggered.value = false;
-			}
-		}
-	}, 100);
-
 	try {
 		const stream = await navigator.mediaDevices.getUserMedia({
 			video: {
@@ -137,7 +121,79 @@ const startCamera = async () => {
 	} catch (error) {
 		console.error(error);
 		result.value = "Unable to access camera";
+		return;
 	}
+
+	detectionInterval = window.setInterval(async () => {
+		if (!videoRef.value) return;
+		const res = await detectSleepiness(videoRef.value);
+		if (!res) return;
+
+		currentEAR.value = res.ear;
+
+		if (res.ear < 0.3) {
+			currentCondition.value = "Eyes Closed (Static)";
+
+			if (eyeClosedStartTime.value === null) {
+				eyeClosedStartTime.value = Date.now();
+			}
+
+			const durationClosed = Date.now() - eyeClosedStartTime.value;
+			const durationInSeconds = durationClosed / 1000;
+
+			if (durationInSeconds > longestCloseDuration.value) {
+				longestCloseDuration.value = parseFloat(durationInSeconds.toFixed(1));
+			}
+
+			if (durationClosed > 15000) {
+				sleepStatus.value = "CRITICAL DROWSY";
+				currentCondition.value = "Emergency Alert!";
+				updateWorstCondition("ALERT TRIGGERED");
+
+				if (!alertTriggered.value) {
+					alertTriggered.value = true;
+					alarm.currentTime = 0;
+					alarm.loop = true;
+					alarm
+						.play()
+						.catch((err) => console.error("Audio playback failed:", err));
+					showModal.value = true;
+				}
+			} else if (durationClosed > 10000) {
+				if (!showModal.value) {
+					sleepStatus.value = "Sleeping";
+					currentCondition.value = "Sleeping (No Alert Yet)";
+					updateWorstCondition("Sleeping");
+				}
+			} else {
+				if (!showModal.value) {
+					const countdownToSleep = Math.ceil((10000 - durationClosed) / 1000);
+					sleepStatus.value = `Closed (${countdownToSleep}s to Sleep)`;
+				}
+			}
+		} else {
+			if (eyeClosedStartTime.value !== null) {
+				const finalCloseDuration = Date.now() - eyeClosedStartTime.value;
+
+				if (finalCloseDuration > 50 && finalCloseDuration < 400) {
+					totalBlinks.value++;
+					if (finalCloseDuration < fastestBlinkDuration.value) {
+						fastestBlinkDuration.value = finalCloseDuration;
+					}
+				}
+			}
+
+			eyeClosedStartTime.value = null;
+			currentCondition.value = "Eyes Open (Normal)";
+
+			if (!showModal.value) {
+				sleepStatus.value = "Awake";
+				alertTriggered.value = false;
+			}
+		}
+
+		lastEAR.value = res.ear;
+	}, 150);
 };
 
 const dismissAlert = () => {
@@ -145,8 +201,9 @@ const dismissAlert = () => {
 	alarm.pause();
 	alarm.currentTime = 0;
 	alertTriggered.value = false;
-	closedFrames.value = 0;
+	eyeClosedStartTime.value = null;
 	sleepStatus.value = "Awake";
+	currentCondition.value = "Eyes Open (Normal)";
 };
 
 const stopCamera = () => {
@@ -154,40 +211,39 @@ const stopCamera = () => {
 		clearInterval(detectionInterval);
 		detectionInterval = null;
 	}
-
 	if (cameraStream.value) {
 		cameraStream.value.getTracks().forEach((track) => track.stop());
 		cameraStream.value = null;
 	}
-
 	if (videoRef.value) {
 		videoRef.value.srcObject = null;
 	}
-
 	cameraActive.value = false;
 	sleepStatus.value = "Awake";
-	closedFrames.value = 0;
+	eyeClosedStartTime.value = null;
+	lastEAR.value = 0;
+
+	longestCloseDuration.value = 0;
+	fastestBlinkDuration.value = Infinity;
+	currentCondition.value = "Eyes Open (Normal)";
+	worstCondition.value = "Normal";
+	totalBlinks.value = 0;
+
 	result.value = "Camera stopped";
 };
 
 const captureAndIdentify = async () => {
 	if (!videoRef.value || !canvasRef.value) return;
 	loading.value = true;
-
 	try {
 		const canvas = canvasRef.value;
 		const video = videoRef.value;
-
 		canvas.width = video.videoWidth;
 		canvas.height = video.videoHeight;
-
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
-
 		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
 		const faces = await recognizeFace(canvas);
-
 		if (!faces.length) {
 			result.value = "No face detected in camera snap";
 		} else {
@@ -213,25 +269,64 @@ const resetUpload = () => {
 		fileInputRef.value.value = "";
 	}
 };
-const currentEAR = ref(0);
 </script>
 
 <template>
 	<div class="container">
 		<div class="monitoring-section">
 			<h2>Live Camera Monitoring</h2>
-			<div class="status-card">
-				<h3>Sleep Status: {{ sleepStatus }}</h3>
-				<p>EAR: {{ currentEAR.toFixed(3) }}</p>
-				<p>Closed Frames: {{ closedFrames }}</p>
+
+			<div class="status-card grid-status">
+				<div class="status-group-main">
+					<h3>
+						Sleep Status:
+						<span
+							:class="{
+								'text-danger':
+									sleepStatus === 'Sleeping' ||
+									sleepStatus === 'CRITICAL DROWSY',
+							}"
+							>{{ sleepStatus }}</span
+						>
+					</h3>
+					<p>
+						EAR Value: <strong>{{ currentEAR.toFixed(3) }}</strong>
+					</p>
+				</div>
+
+				<div class="metrics-divider"></div>
+
+				<div class="status-details">
+					<p>🟢 <strong>Eye Condition:</strong> {{ currentCondition }}</p>
+					<p>
+						⚠️ <strong>Worst Condition:</strong>
+						<span
+							:class="{
+								'worst-critical': worstCondition === 'ALERT TRIGGERED',
+							}"
+							>{{ worstCondition }}</span
+						>
+					</p>
+					<p>
+						⏱️ <strong>Longest Eyelid Closed:</strong>
+						{{ longestCloseDuration }} detik
+					</p>
+					<p>
+						⚡ <strong>Fastest Blink:</strong>
+						{{ fastestBlinkDuration === Infinity ? "0" : fastestBlinkDuration }}
+						ms
+					</p>
+					<p>📊 <strong>Blink Counts:</strong> {{ totalBlinks }}</p>
+				</div>
 			</div>
+
 			<video ref="videoRef" autoplay playsinline muted class="camera"></video>
 			<canvas ref="canvasRef" style="display: none"></canvas>
+
 			<div class="button-group">
 				<button @click="startCamera" :disabled="cameraActive" class="icon-btn">
 					<Camera class="btn-icon" /> Activate Camera
 				</button>
-
 				<button
 					@click="stopCamera"
 					:disabled="!cameraActive"
@@ -316,52 +411,6 @@ const currentEAR = ref(0);
 </template>
 
 <style scoped>
-.icon-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-}
-
-.btn-icon {
-	width: 18px;
-	height: 18px;
-}
-
-.btn-danger {
-	background: #dc2626;
-	box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
-}
-.btn-danger:hover:not(:disabled) {
-	background: #b91c1c;
-	box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
-}
-
-.modal-title {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-}
-
-.modal-icon {
-	width: 28px;
-	height: 28px;
-	color: #ef4444;
-}
-
-.footer-link {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.footer-icon-img {
-	width: 16px;
-	height: 16px;
-}
-
-/* Rest of your container, camera, modal-overlay, and layout CSS styles remain unchanged */
 .container {
 	max-width: 1600px;
 	margin: 0 auto;
@@ -381,11 +430,207 @@ const currentEAR = ref(0);
 	padding-bottom: 16px;
 }
 
+.status-card {
+	width: 100%;
+	max-width: 500px;
+	padding: 22px 20px;
+	margin-bottom: 24px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.2);
+	backdrop-filter: blur(10px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.status-card h3 {
+	margin-bottom: 10px;
+	font-size: 1.4rem;
+}
+
+.grid-status {
+	display: flex;
+	flex-direction: column;
+	text-align: left;
+	gap: 12px;
+}
+
+.metrics-divider {
+	height: 1px;
+	background: rgba(0, 0, 0, 0.1);
+	margin: 8px 0;
+}
+
+.status-details p {
+	margin: 6px 0 !important;
+	font-size: 0.95rem;
+}
+
+.camera {
+	width: 100%;
+	max-width: 900px;
+	height: auto;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+	border-radius: 16px;
+	background: #000;
+	display: block;
+	margin: 0 auto;
+	box-shadow:
+		0 20px 40px rgba(0, 0, 0, 0.12),
+		0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.button-group {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: center;
+	gap: 12px;
+	margin: 24px 0;
+}
+
+button {
+	border: none;
+	border-radius: 14px;
+	padding: 12px 24px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.25s ease;
+	background: #2563eb;
+	color: white;
+	box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
+button:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+}
+
+button:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.btn-icon {
+	width: 18px;
+	height: 18px;
+}
+
+.btn-danger {
+	background: #dc2626;
+	box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+	background: #b91c1c;
+	box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+}
+
+.text-danger {
+	color: #dc2626;
+	font-weight: bold;
+}
+
+.worst-critical {
+	color: #dc2626;
+	font-weight: bold;
+	animation: blink-text 1.5s infinite;
+}
+
+@keyframes blink-text {
+	50% {
+		opacity: 0.5;
+	}
+}
+
+.section-divider {
+	width: 100%;
+	max-width: 1000px;
+	margin: 50px auto;
+	border: none;
+	height: 1px;
+	background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+}
+
 .upload-section {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+}
+
+input[type="file"] {
+	width: 100%;
+	max-width: 500px;
+	padding: 14px;
+	border-radius: 16px;
+	border: 2px dashed #cbd5e1;
+	background: white;
+	color: #475569;
+	font-size: 0.95rem;
+	cursor: pointer;
+	transition: all 0.25s ease;
+}
+
+input[type="file"]:hover {
+	border-color: #2563eb;
+	background: #f8fafc;
+}
+
+.preview {
+	margin: 24px 0;
+	display: flex;
+	justify-content: center;
+}
+
+.preview img {
+	width: 100%;
+	max-width: 700px;
+	max-height: 500px;
+	object-fit: contain;
+	border-radius: 24px;
+	box-shadow:
+		0 20px 40px rgba(0, 0, 0, 0.12),
+		0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.result-card {
+	width: 100%;
+	max-width: 900px;
+}
+
+pre {
+	width: 100%;
+	max-width: 900px;
+	margin: 20px auto 0;
+	padding: 20px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.7);
+	backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.5);
+	box-shadow:
+		0 10px 30px rgba(15, 23, 42, 0.08),
+		0 4px 12px rgba(15, 23, 42, 0.05);
+	font-size: 0.9rem;
+	line-height: 1.6;
+	color: #0f172a;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	text-align: left;
 }
 
 .modal-overlay {
@@ -413,9 +658,19 @@ const currentEAR = ref(0);
 	border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.modal-content h2 {
+.modal-title {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	color: #ef4444;
 	margin-bottom: 12px;
+}
+
+.modal-icon {
+	width: 28px;
+	height: 28px;
+	color: #ef4444;
 }
 
 .modal-content p {
@@ -433,128 +688,12 @@ const currentEAR = ref(0);
 	box-shadow: 0 8px 24px rgba(239, 68, 68, 0.45);
 }
 
-h1 {
-	font-size: 3rem;
-	font-weight: 800;
-	margin-bottom: 48px;
-	color: #0f172a;
-	letter-spacing: -0.03em;
-	font-family: monospace;
-}
 h2 {
 	font-size: 1.5rem;
 	font-weight: 700;
 	color: #334155;
 	margin-bottom: 20px;
 	font-family: monospace;
-}
-.camera {
-	width: 100%;
-	max-width: 900px;
-	height: auto;
-	aspect-ratio: 16 / 9;
-	object-fit: cover;
-	border-radius: 16px;
-	background: #000;
-	display: block;
-	margin: 0 auto;
-	box-shadow:
-		0 20px 40px rgba(0, 0, 0, 0.12),
-		0 8px 16px rgba(0, 0, 0, 0.08);
-}
-.preview {
-	margin: 24px 0;
-	display: flex;
-	justify-content: center;
-}
-.preview img {
-	width: 100%;
-	max-width: 700px;
-	max-height: 500px;
-	object-fit: contain;
-	border-radius: 24px;
-	box-shadow:
-		0 20px 40px rgba(0, 0, 0, 0.12),
-		0 8px 16px rgba(0, 0, 0, 0.08);
-}
-.button-group {
-	display: flex;
-	flex-wrap: wrap;
-	flex-direction: row;
-	justify-content: center;
-	gap: 12px;
-	margin: 24px 0;
-}
-button {
-	border: none;
-	border-radius: 14px;
-	padding: 12px 24px;
-	font-size: 0.95rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.25s ease;
-	background: #2563eb;
-	color: white;
-	box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-}
-button:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
-}
-button:active:not(:disabled) {
-	transform: translateY(0);
-}
-button:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-	transform: none;
-	box-shadow: none;
-}
-input[type="file"] {
-	width: 100%;
-	max-width: 500px;
-	padding: 14px;
-	border-radius: 16px;
-	border: 2px dashed #cbd5e1;
-	background: white;
-	color: #475569;
-	font-size: 0.95rem;
-	cursor: pointer;
-	transition: all 0.25s ease;
-}
-input[type="file"]:hover {
-	border-color: #2563eb;
-	background: #f8fafc;
-}
-pre {
-	width: 100%;
-	max-width: 900px;
-	margin: 20px auto 0;
-	padding: 20px;
-	border-radius: 20px;
-	background: rgba(255, 255, 255, 0.7);
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
-	border: 1px solid rgba(255, 255, 255, 0.5);
-	box-shadow:
-		0 10px 30px rgba(15, 23, 42, 0.08),
-		0 4px 12px rgba(15, 23, 42, 0.05);
-	font-size: 0.9rem;
-	line-height: 1.6;
-	color: #0f172a;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	word-break: break-word;
-	text-align: left;
-}
-
-.section-divider {
-	width: 100%;
-	max-width: 1000px;
-	margin: 50px auto;
-	border: none;
-	height: 1px;
-	background: linear-gradient(to right, transparent, #cbd5e1, transparent);
 }
 
 .footer {
@@ -604,6 +743,17 @@ pre {
 	text-shadow: 0 0 8px #38bdf8;
 }
 
+.footer-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.footer-icon-img {
+	width: 16px;
+	height: 16px;
+}
+
 @media (max-width: 480px) {
 	.container {
 		padding: 16px 12px;
@@ -614,9 +764,6 @@ pre {
 	h2 {
 		font-size: 1.2rem;
 	}
-	p {
-		font-size: 0.9rem;
-	}
 	button {
 		font-size: 0.9rem;
 		padding: 12px 20px;
@@ -625,29 +772,5 @@ pre {
 		font-size: 0.8rem;
 		padding: 12px;
 	}
-}
-
-.status-card {
-	width: 100%;
-	max-width: 500px;
-	padding: 22px 20px;
-	margin-bottom: 24px;
-	border-radius: 20px;
-	background: rgba(255, 255, 255, 0.2);
-	backdrop-filter: blur(10px);
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.status-card h3 {
-	margin-bottom: 10px;
-	font-size: 1.4rem;
-}
-.status-card p {
-	margin: 4px 0;
-	font-size: 1rem;
-}
-.result-card {
-	width: 100%;
-	max-width: 900px;
 }
 </style>

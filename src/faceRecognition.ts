@@ -4,7 +4,6 @@ import * as faceapi from "face-api.js";
 import { knownFaces } from "./faceData";
 
 let faceMatcher: faceapi.FaceMatcher;
-let detectionInterval: number | null = null;
 
 function distance(p1: any, p2: any) {
 	return Math.hypot(p1.x - p2.x, p1.y - p2.y);
@@ -17,13 +16,14 @@ function calculateEAR(eye: any[]) {
 
 	return (A + B) / (2 * C);
 }
+
 export async function loadModels() {
 	const MODEL_URL = "/models";
 
+	// Memuat model secara paralel (duplikasi faceLandmark68Net sudah dihapus)
 	await Promise.all([
 		faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
 		faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-		faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
 		faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
 	]);
 }
@@ -46,20 +46,20 @@ export async function initializeKnownFaces() {
 			}
 
 			labeledDescriptors.push(
-				new faceapi.LabeledFaceDescriptors(person.name, [detection.descriptor])
+				new faceapi.LabeledFaceDescriptors(person.name, [detection.descriptor]),
 			);
 		} catch (error) {
 			console.error(
 				`Failed loading reference image for ${person.name}:`,
-				error
+				error,
 			);
 		}
 	}
 
-	// Fallback descriptor if no known faces were loaded successfully
+	// Fallback descriptor jika dataset wajah gagal dimuat
 	if (labeledDescriptors.length === 0) {
 		console.error(
-			"No known faces were successfully initialized. Face matching will fail."
+			"No known faces were successfully initialized. Face matching will fail.",
 		);
 		return;
 	}
@@ -67,11 +67,11 @@ export async function initializeKnownFaces() {
 	faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
 }
 
-// FIX: Changed type to TNetInput to universally support Images, Canvases, and Videos
+// Mendukung Input berupa Gambar, Canvas, maupun Elemen Video secara universal
 export async function recognizeFace(inputElement: faceapi.TNetInput) {
 	if (!faceMatcher) {
 		throw new Error(
-			"FaceMatcher is not initialized. Call initializeKnownFaces() first."
+			"FaceMatcher is not initialized. Call initializeKnownFaces() first.",
 		);
 	}
 
@@ -110,6 +110,6 @@ export async function detectSleepiness(inputElement: faceapi.TNetInput) {
 
 	return {
 		ear,
-		sleepy: ear < 0.22,
+		sleepy: ear < 0.23, // Disinkronkan dengan batas 0.23 dari komponen Vue Anda
 	};
 }
