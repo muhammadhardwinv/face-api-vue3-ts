@@ -2,7 +2,7 @@
 
 # AI Drowsiness Detection & Face Recognition System
 
-An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness. When prolonged eye closure is detected, the system triggers an audible alert sound as an interactive multimedia warning to help regain user attention. In addition, the application supports face recognition through uploaded images and live camera captures, providing a comprehensive computer vision and multimedia-based monitoring solution.
+### An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3, TypeScript, Face-API.js, and TensorFlow.js. The application monitors eye activity in real time using Eye Aspect Ratio (EAR) analysis to detect signs of drowsiness. When prolonged eye closure is detected, the system triggers an audible alert sound as an interactive multimedia warning to help regain user attention. In addition, the application supports face recognition through uploaded images and live camera captures, providing a comprehensive computer vision and multimedia-based monitoring solution.
 ---
 
 ## Project Information
