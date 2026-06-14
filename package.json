@@ -11,10 +11,15 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "@vuecs/icon": "^1.0.1",
+    "@vuecs/icons-lucide": "^1.1.1",
+    "@vueuse/core": "^14.3.0",
     "face-api.js": "^0.22.2",
+    "lucide-vue-next": "^1.0.0",
     "vue": "^3.5.32"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.112",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.12.2",
     "@vitejs/plugin-vue": "^6.0.6",

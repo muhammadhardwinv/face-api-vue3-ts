@@ -1,4 +1,5 @@
 <!-- @format -->
+
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import "./assets/style.css";
@@ -8,6 +9,16 @@ import {
 	recognizeFace,
 	detectSleepiness,
 } from "./faceRecognition";
+
+// Import Lucide Icons directly from the official Vue package
+import {
+	Camera,
+	OctagonAlert,
+	ScanFace,
+	UploadCloud,
+	Github,
+	TriangleAlert,
+} from "lucide-vue-next";
 
 const imagePreview = ref("");
 const result = ref("No result");
@@ -81,10 +92,8 @@ const startCamera = async () => {
 		const result = await detectSleepiness(videoRef.value);
 		if (!result) return;
 
-		// Update the template EAR ref (fixing the missing link in your original code)
 		currentEAR.value = result.ear;
 
-		console.log("EAR:", result.ear);
 		if (result.ear < 0.3) {
 			closedFrames.value++;
 		} else {
@@ -97,17 +106,14 @@ const startCamera = async () => {
 				alertTriggered.value = true;
 				alarm.currentTime = 0;
 
-				// 1. Play the alarm sound first
-				alarm.loop = true; // Optional: keeps it ringing until dismissed
+				alarm.loop = true;
 				alarm
 					.play()
 					.catch((err) => console.error("Audio playback failed:", err));
 
-				// 2. Open our custom Vue-controlled modal instead of blocking alert()
 				showModal.value = true;
 			}
 		} else {
-			// Only reset if the user isn't currently looking at an active alert
 			if (!showModal.value) {
 				sleepStatus.value = "Awake";
 				alertTriggered.value = false;
@@ -210,64 +216,88 @@ const resetUpload = () => {
 };
 const currentEAR = ref(0);
 </script>
+
 <template>
 	<div class="container">
-		<h2>Live Camera Monitoring</h2>
-		<div class="status-card">
-			<h3>Sleep Status: {{ sleepStatus }}</h3>
-			<p>EAR: {{ currentEAR.toFixed(3) }}</p>
-			<p>Closed Frames: {{ closedFrames }}</p>
-		</div>
-		<video ref="videoRef" autoplay playsinline muted class="camera"></video>
-		<canvas ref="canvasRef" style="display: none"></canvas>
-		<div class="button-group">
-			<button @click="startCamera" :disabled="cameraActive">
-				📷 Activate Camera
-			</button>
+		<div class="monitoring-section">
+			<h2>Live Camera Monitoring</h2>
+			<div class="status-card">
+				<h3>Sleep Status: {{ sleepStatus }}</h3>
+				<p>EAR: {{ currentEAR.toFixed(3) }}</p>
+				<p>Closed Frames: {{ closedFrames }}</p>
+			</div>
+			<video ref="videoRef" autoplay playsinline muted class="camera"></video>
+			<canvas ref="canvasRef" style="display: none"></canvas>
+			<div class="button-group">
+				<button @click="startCamera" :disabled="cameraActive" class="icon-btn">
+					<Camera class="btn-icon" /> Activate Camera
+				</button>
 
-			<button @click="stopCamera" :disabled="!cameraActive">
-				🛑 Stop Camera
-			</button>
-			<button @click="captureAndIdentify" :disabled="loading || !cameraActive">
-				{{ loading ? "Processing..." : "Capture & Identify" }}
-			</button>
+				<button
+					@click="stopCamera"
+					:disabled="!cameraActive"
+					class="icon-btn btn-danger"
+				>
+					<OctagonAlert class="btn-icon" /> Stop Camera
+				</button>
+				<button
+					@click="captureAndIdentify"
+					:disabled="loading || !cameraActive"
+					class="icon-btn"
+				>
+					<ScanFace class="btn-icon" />
+					{{ loading ? "Processing..." : "Capture & Identify" }}
+				</button>
+			</div>
+		</div>
 
-			<!-- <button @click="alarm.play()">Test Alarm</button> -->
-		</div>
-		<hr />
-		<h2>Upload Image Recognition</h2>
-		<input
-			ref="fileInputRef"
-			type="file"
-			accept="image/*"
-			@change="handleUpload"
-		/>
-		<div v-if="imagePreview" class="preview">
-			<img ref="imageRef" :src="imagePreview" alt="Uploaded Image" />
-		</div>
-		<div v-if="imagePreview" class="button-group">
-			<button
-				v-if="!recognitionFinished"
-				@click="identifyFace"
-				:disabled="loading"
-			>
-				{{ loading ? "Processing..." : "Identify Uploaded Face" }}
-			</button>
-			<button v-if="recognitionFinished" @click="resetUpload">
-				📂 Upload New Image
-			</button>
-		</div>
-		<div class="result-card">
-			<pre>{{ result }}</pre>
+		<hr class="section-divider" />
+
+		<div class="upload-section">
+			<h2>Upload Image Recognition</h2>
+			<input
+				ref="fileInputRef"
+				type="file"
+				accept="image/*"
+				@change="handleUpload"
+			/>
+			<div v-if="imagePreview" class="preview">
+				<img ref="imageRef" :src="imagePreview" alt="Uploaded Image" />
+			</div>
+			<div v-if="imagePreview" class="button-group">
+				<button
+					v-if="!recognitionFinished"
+					@click="identifyFace"
+					:disabled="loading"
+					class="icon-btn"
+				>
+					<ScanFace class="btn-icon" />
+					{{ loading ? "Processing..." : "Identify Uploaded Face" }}
+				</button>
+				<button
+					v-if="recognitionFinished"
+					@click="resetUpload"
+					class="icon-btn"
+				>
+					<UploadCloud class="btn-icon" /> Upload New Image
+				</button>
+			</div>
+			<div class="result-card">
+				<pre>{{ result }}</pre>
+			</div>
 		</div>
 	</div>
+
 	<div v-if="showModal" class="modal-overlay">
 		<div class="modal-content">
-			<h2>⚠️ Drowsiness Detected!</h2>
+			<h2 class="modal-title">
+				<TriangleAlert class="modal-icon" /> Drowsiness Detected!
+			</h2>
 			<p>Please wake up and take a break if needed.</p>
 			<button @click="dismissAlert" class="dismiss-btn">I am Awake</button>
 		</div>
 	</div>
+
 	<footer class="footer">
 		<div class="footer-left">
 			<span class="status-dot"></span>
@@ -278,14 +308,61 @@ const currentEAR = ref(0);
 				href="https://github.com/muhammadhardwinv"
 				target="_blank"
 				rel="noopener noreferrer"
+				class="footer-link"
 			>
-				<i class="fab fa-github"></i> @muhammadhardwinv
+				<Github class="footer-icon-img" /> @muhammadhardwinv
 			</a>
 		</div>
 	</footer>
 </template>
 
 <style scoped>
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.btn-icon {
+	width: 18px;
+	height: 18px;
+}
+
+.btn-danger {
+	background: #dc2626;
+	box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+.btn-danger:hover:not(:disabled) {
+	background: #b91c1c;
+	box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+}
+
+.modal-title {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.modal-icon {
+	width: 28px;
+	height: 28px;
+	color: #ef4444;
+}
+
+.footer-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.footer-icon-img {
+	width: 16px;
+	height: 16px;
+}
+
+/* Rest of your container, camera, modal-overlay, and layout CSS styles remain unchanged */
 .container {
 	max-width: 1600px;
 	margin: 0 auto;
@@ -296,13 +373,29 @@ const currentEAR = ref(0);
 	text-align: center;
 }
 
+.monitoring-section {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 16px;
+	padding-bottom: 16px;
+}
+
+.upload-section {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
 .modal-overlay {
 	position: fixed;
 	top: 0;
 	left: 0;
 	width: 100vw;
 	height: 100vh;
-	background: rgba(15, 23, 42, 0.6); /* Translucent dark backdrop */
+	background: rgba(15, 23, 42, 0.6);
 	backdrop-filter: blur(8px);
 	display: flex;
 	justify-content: center;
@@ -322,7 +415,7 @@ const currentEAR = ref(0);
 }
 
 .modal-content h2 {
-	color: #ef4444; /* Eye-catching red alarm header */
+	color: #ef4444;
 	margin-bottom: 12px;
 }
 
@@ -350,25 +443,11 @@ h1 {
 	font-family: monospace;
 }
 h2 {
-	font-size: 1.4rem;
+	font-size: 1.5rem;
 	font-weight: 700;
 	color: #334155;
 	margin-bottom: 20px;
 	font-family: monospace;
-}
-.card {
-	width: 100%;
-	max-width: 1000px;
-	background: rgba(255, 255, 255, 0.75);
-	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
-	border-radius: 24px;
-	padding: 32px;
-	margin-bottom: 32px;
-	box-shadow:
-		0 10px 30px rgba(15, 23, 42, 0.08),
-		0 4px 12px rgba(15, 23, 42, 0.05);
-	border: 1px solid rgba(255, 255, 255, 0.5);
 }
 .camera {
 	width: 100%;
@@ -410,7 +489,7 @@ h2 {
 button {
 	border: none;
 	border-radius: 14px;
-	padding: 12px 22px;
+	padding: 12px 24px;
 	font-size: 0.95rem;
 	font-weight: 600;
 	cursor: pointer;
@@ -469,10 +548,11 @@ pre {
 	word-break: break-word;
 	text-align: left;
 }
-hr {
+
+.section-divider {
 	width: 100%;
 	max-width: 1000px;
-	margin: 40px auto;
+	margin: 50px auto;
 	border: none;
 	height: 1px;
 	background: linear-gradient(to right, transparent, #cbd5e1, transparent);
@@ -480,29 +560,22 @@ hr {
 
 .footer {
 	display: flex;
-	justify-content: space-between; /* Pushes content to the left and right edges */
+	justify-content: space-between;
 	align-items: center;
 	padding: 1rem 2rem;
-	background: rgba(
-		15,
-		23,
-		42,
-		0.6
-	); /* Sleek, semi-transparent dark background */
-	backdrop-filter: blur(8px); /* Modern glassmorphism effect */
-	border-top: 1px solid rgba(255, 255, 255, 0.1); /* Subtle top divider */
-	color: #94a3b8; /* Muted tech-gray text color */
-	font-family:
-		"Courier New", Courier, monospace; /* Use monospace for a terminal feel */
+	background: rgba(15, 23, 42, 0.6);
+	backdrop-filter: blur(8px);
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	color: #94a3b8;
+	font-family: "Courier New", Courier, monospace;
 	font-size: 0.85rem;
 }
 
-/* Pulsing Status Dot for Option 1 */
 .status-dot {
 	display: inline-block;
 	width: 8px;
 	height: 8px;
-	background-color: #10b981; /* Emerald Green */
+	background-color: #10b981;
 	border-radius: 50%;
 	margin-right: 8px;
 	box-shadow: 0 0 8px #10b981;
@@ -521,7 +594,6 @@ hr {
 	}
 }
 
-/* Make your GitHub link turn a cool color (like cyan/neon blue) on hover */
 .footer a {
 	color: #38bdf8;
 	text-decoration: none;
@@ -530,36 +602,37 @@ hr {
 
 .footer a:hover {
 	color: #f1f5f9;
-	text-shadow: 0 0 8px #38bdf8; /* Soft neon glow on hover */
+	text-shadow: 0 0 8px #38bdf8;
 }
+
 @media (max-width: 480px) {
 	.container {
 		padding: 16px 12px;
 	}
-
-	h2 {
-		font-size: 1rem;
+	.section-divider {
+		margin: 40px auto;
 	}
-
+	h2 {
+		font-size: 1.2rem;
+	}
 	p {
 		font-size: 0.9rem;
 	}
-
 	button {
 		font-size: 0.9rem;
-		padding: 12px;
+		padding: 12px 20px;
 	}
-
 	pre {
 		font-size: 0.8rem;
 		padding: 12px;
 	}
 }
+
 .status-card {
 	width: 100%;
 	max-width: 500px;
-	padding: 20px;
-	margin-bottom: 20px;
+	padding: 22px 20px;
+	margin-bottom: 24px;
 	border-radius: 20px;
 	background: rgba(255, 255, 255, 0.2);
 	backdrop-filter: blur(10px);
@@ -570,12 +643,10 @@ hr {
 	margin-bottom: 10px;
 	font-size: 1.4rem;
 }
-
 .status-card p {
 	margin: 4px 0;
 	font-size: 1rem;
 }
-
 .result-card {
 	width: 100%;
 	max-width: 900px;
