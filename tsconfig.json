@@ -4,14 +4,6 @@
 	"exclude": ["src/**/__tests__/*"],
 	"compilerOptions": {
 		"composite": true,
-		"tsBuildInfoFile": "./node_modules/.cache/typescript/tsconfig.app.tsbuildinfo",
-
-		// TAMBAHKAN ATAU SESUAIKAN BAGIAN INI
-		"types": ["vite/client", "unplugin-icons/types/vue"],
-
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./src/*"]
-		}
+		"tsBuildInfoFile": "./node_modules/.cache/typescript/tsconfig.app.tsbuildinfo"
 	}
 }
