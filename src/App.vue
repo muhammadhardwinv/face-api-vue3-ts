@@ -73,30 +73,48 @@ const identifyFace = async () => {
 	}
 };
 
+const showModal = ref(false);
+
 const startCamera = async () => {
 	detectionInterval = window.setInterval(async () => {
 		if (!videoRef.value) return;
 		const result = await detectSleepiness(videoRef.value);
 		if (!result) return;
+
+		// Update the template EAR ref (fixing the missing link in your original code)
+		currentEAR.value = result.ear;
+
 		console.log("EAR:", result.ear);
 		if (result.ear < 0.3) {
 			closedFrames.value++;
 		} else {
 			closedFrames.value = 0;
 		}
+
 		if (closedFrames.value > 30) {
 			sleepStatus.value = "Drowsy";
 			if (!alertTriggered.value) {
 				alertTriggered.value = true;
 				alarm.currentTime = 0;
-				alarm.play();
-				alert("⚠️ Drowsiness Detected!");
+
+				// 1. Play the alarm sound first
+				alarm.loop = true; // Optional: keeps it ringing until dismissed
+				alarm
+					.play()
+					.catch((err) => console.error("Audio playback failed:", err));
+
+				// 2. Open our custom Vue-controlled modal instead of blocking alert()
+				showModal.value = true;
 			}
 		} else {
-			sleepStatus.value = "Awake";
-			alertTriggered.value = false;
+			// Only reset if the user isn't currently looking at an active alert
+			if (!showModal.value) {
+				sleepStatus.value = "Awake";
+				alertTriggered.value = false;
+			}
 		}
 	}, 100);
+
 	try {
 		const stream = await navigator.mediaDevices.getUserMedia({
 			video: {
@@ -106,11 +124,6 @@ const startCamera = async () => {
 			},
 		});
 		cameraStream.value = stream;
-		const tracks = stream.getVideoTracks();
-		if (!tracks.length) {
-			console.error("No video track found");
-			return;
-		}
 		if (videoRef.value) {
 			videoRef.value.srcObject = stream;
 		}
@@ -120,6 +133,15 @@ const startCamera = async () => {
 		console.error(error);
 		result.value = "Unable to access camera";
 	}
+};
+
+const dismissAlert = () => {
+	showModal.value = false;
+	alarm.pause();
+	alarm.currentTime = 0;
+	alertTriggered.value = false;
+	closedFrames.value = 0;
+	sleepStatus.value = "Awake";
 };
 
 const stopCamera = () => {
@@ -239,6 +261,13 @@ const currentEAR = ref(0);
 			<pre>{{ result }}</pre>
 		</div>
 	</div>
+	<div v-if="showModal" class="modal-overlay">
+		<div class="modal-content">
+			<h2>⚠️ Drowsiness Detected!</h2>
+			<p>Please wake up and take a break if needed.</p>
+			<button @click="dismissAlert" class="dismiss-btn">I am Awake</button>
+		</div>
+	</div>
 	<footer class="footer">
 		<p>© 2026 Ahmed Hardwin</p>
 		<span>AI Face Recognition System</span>
@@ -255,6 +284,52 @@ const currentEAR = ref(0);
 	align-items: center;
 	text-align: center;
 }
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(15, 23, 42, 0.6); /* Translucent dark backdrop */
+	backdrop-filter: blur(8px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 9999;
+}
+
+.modal-content {
+	background: white;
+	padding: 32px;
+	border-radius: 24px;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+	max-width: 400px;
+	width: 90%;
+	text-align: center;
+	border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.modal-content h2 {
+	color: #ef4444; /* Eye-catching red alarm header */
+	margin-bottom: 12px;
+}
+
+.modal-content p {
+	color: #475569;
+	margin-bottom: 24px;
+}
+
+.dismiss-btn {
+	background: #ef4444;
+	box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.dismiss-btn:hover:not(:disabled) {
+	background: #dc2626;
+	box-shadow: 0 8px 24px rgba(239, 68, 68, 0.45);
+}
+
 h1 {
 	font-size: 3rem;
 	font-weight: 800;
@@ -279,7 +354,8 @@ h2 {
 	border-radius: 24px;
 	padding: 32px;
 	margin-bottom: 32px;
-	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08),
+	box-shadow:
+		0 10px 30px rgba(15, 23, 42, 0.08),
 		0 4px 12px rgba(15, 23, 42, 0.05);
 	border: 1px solid rgba(255, 255, 255, 0.5);
 }
@@ -293,7 +369,9 @@ h2 {
 	background: #000;
 	display: block;
 	margin: 0 auto;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+	box-shadow:
+		0 20px 40px rgba(0, 0, 0, 0.12),
+		0 8px 16px rgba(0, 0, 0, 0.08);
 }
 .preview {
 	margin: 24px 0;
@@ -306,7 +384,9 @@ h2 {
 	max-height: 500px;
 	object-fit: contain;
 	border-radius: 24px;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+	box-shadow:
+		0 20px 40px rgba(0, 0, 0, 0.12),
+		0 8px 16px rgba(0, 0, 0, 0.08);
 }
 .button-group {
 	display: flex;
@@ -367,7 +447,8 @@ pre {
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	border: 1px solid rgba(255, 255, 255, 0.5);
-	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08),
+	box-shadow:
+		0 10px 30px rgba(15, 23, 42, 0.08),
 		0 4px 12px rgba(15, 23, 42, 0.05);
 	font-size: 0.9rem;
 	line-height: 1.6;
