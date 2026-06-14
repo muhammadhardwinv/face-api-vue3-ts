@@ -31,7 +31,7 @@ const recognitionFinished = ref(false);
 
 const sleepStatus = ref("Awake");
 const alertTriggered = ref(false);
-const alarm = new Audio("/sounds/alarm.wav");
+const alarm = new Audio("/sounds/alarm.mp3");
 
 let detectionInterval: number | null = null;
 const eyeClosedStartTime = ref<number | null>(null);
@@ -104,6 +104,15 @@ const updateWorstCondition = (level: string) => {
 };
 
 const startCamera = async () => {
+	alarm
+		.play()
+		.then(() => {
+			alarm.pause();
+			alarm.currentTime = 0;
+		})
+		.catch((err) => {
+			console.log("Audio unlock muted/waiting for interaction:", err);
+		});
 	try {
 		const stream = await navigator.mediaDevices.getUserMedia({
 			video: {
@@ -274,7 +283,7 @@ const resetUpload = () => {
 <template>
 	<div class="container">
 		<div class="monitoring-section">
-			<h2>Live Camera Monitoring</h2>
+			<h2>AI Drowsiness Detection & Face Recognition System</h2>
 
 			<div class="status-card grid-status">
 				<div class="status-group-main">
