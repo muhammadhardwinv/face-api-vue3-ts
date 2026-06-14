@@ -103,7 +103,7 @@ An AI-powered Drowsiness Detection and Face Recognition System built using Vue 3
 
 ## System Workflow
 
-```text
+---
 User Opens Camera
         │
         ▼
@@ -118,9 +118,7 @@ Eye State Analysis
         ▼
 Awake / Eyes Closed / Drowsy
 ```
-````
-
-```text
+```
 Image / Camera Capture
         │
         ▼
@@ -137,7 +135,7 @@ Recognition Result
 
 ```
 
----
+```
 
 ## Technologies Used
 
@@ -276,17 +274,14 @@ During development, the following improvements were implemented:
 
 ## Repository Structure
 
-```text
+```
 src/
 ├── App.vue
 ├── faceRecognition.ts
 ├── assets/
 ├── components/
 └── models/
-
 ```
-
----
 
 ## Acknowledgements
 
@@ -312,7 +307,3 @@ LC11-LEC
 ## Lecturer
 
 This project was developed as part of the Artificial Intelligence course under the guidance of **Roy Kurniawan, S.Kom., M.M. (LC11-LEC)**.
-
-```
-
-```
