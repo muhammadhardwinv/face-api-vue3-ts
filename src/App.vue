@@ -10,7 +10,6 @@ import {
 	detectSleepiness,
 } from "./faceRecognition";
 
-// Import Lucide Icons directly from the official Vue package
 import {
 	Camera,
 	OctagonAlert,
